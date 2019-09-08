@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+
+# dir is this script's dir, normalized for symlinks
+dir=$(cd $(dirname $(readlink $BASH_SOURCE || echo $BASH_SOURCE)) && pwd -P)
+
+# framework imports
+legible=$dir/vendor/legible
+source $legible/hash.bash
+source $legible/in.bash
+source $legible/os.bash
+source $legible/out.bash
+source $legible/str.bash
+source $legible/sys.bash
+
+# shell directives
+sys.wordSplitOnSpaceAndTab  off
+sys.globbing                off
+sys.aliases                 on
+
+# our name
+prog=$(basename $0)
+
+Usage=$(in.readHeredoc <<END
+  Do something cool.
+
+  Usage: $prog [OPTIONS] [--] [COMMAND]
+
+  Options:
+
+    --help - this message
+
+    --trace - trace execution for debugging
+
+  Commands:
+
+    docool -  do something cool (default if no command supplied)
+
+  Without a command or with docool, $prog does something cool.
+END
+)
+
+main () {
+  arg=${1:-}
+
+  case $arg in
+    ''|docool ) doCool;;
+    * )
+      sys.rc 2 || sys.die "Unknown argument '$arg'"
+      ;;
+  esac
+}
+
+# doCool does something cool
+doCool () {
+    out.println "I just did something cool."
+}
+
+# globals
+coolness=total
+
+# constants
+Mycool=value
+
+# __name__ != '__main__'
+sys.sourced? && return
+
+# halt on error
+sys.strict on
+
+# option defaults
+verbose=0
+
+# parse options
+while [[ ${1:-} == -?* ]]; do
+  case $1 in
+    --help  ) sys.die "$Usage"  ;;
+    --trace ) sys.trace on      ;;
+    -v      ) verbose=1         ;;
+    -- )
+      shift
+      break
+      ;;
+  esac
+  shift
+done
+
+main $*
