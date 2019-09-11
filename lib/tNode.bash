@@ -6,10 +6,13 @@ set -o noglob
 # TNode_next is the id of the next unallocated self
 declare -i TNode_next=1
 
-tNode.leaf? () {
-  local -n ref=TNode_children$1
+# NL is newline
+NL=$'\n'
 
-  ! (( ${#ref[*]} ))
+tNode.leaf? () {
+  local -n children=TNode_children$1
+
+  ! (( ${#children[*]} ))
 }
 
 # new allocates a new node.  If a value is supplied, it becomes the value of
@@ -19,13 +22,13 @@ tNode.new () {
   local self
 
   self=$TNode_next
+  (( TNode_next++ ))
 
   declare -Ag TNode_children$self="()"
   declare -g TNode_parent$self=0
   declare -g TNode_name$self=$name
 
-  S=$TNode_next
-  (( TNode_next++ ))
+  S=$self
 }
 
 # parent returns the parent of the given self.
@@ -45,7 +48,7 @@ tNode.remove () {
     tNode.remove $child
   done
 
-  (( parent )) && unset -v TNode_children$parent[$self];:
+  (( parent )) && unset -v TNode_children$parent[$self]
 
   unset -v TNode_children$self
   unset -v TNode_parent$self
@@ -56,28 +59,39 @@ tNode.remove () {
 # argument.
 tNode.setParent () {
   local self=$1 newParent=$2
-  local -n oldParent=TNode_parent$self
+  local -n parent=TNode_parent$self
 
   (( newParent )) || return
 
   # bail if nothing to do
-  [[ $newParent == $oldParent ]] && return
+  (( $newParent == $parent )) && return
 
-  oldParent=$newParent
-  printf -v TNode_children$newParent[$self] ''
+  parent=$newParent
+  printf -v TNode_children$newParent[$self] %s ''
 }
 
 # setName sets the name of the given self to the second argument.
 tNode.setName () {
-  local -n name=TNode_name$1
+  printf -v TNode_name$1 %s $2
+}
 
-  name=$2
+tNode.toJson () {
+  local self=$1
+  local format
+
+  ! read -rd '' format <<'END'
+{
+  "root": %s
+}
+END
+
+  TNode.fields $self
+  printf -v S "$format" "${S//$NL/$NL  }"
 }
 
 # name returns the name of the given self.
 tNode.name () {
-  local self=$1
-  local -n name=TNode_name$self
+  local -n name=TNode_name$1
 
   S=$name
 }
@@ -93,4 +107,35 @@ tNode.walk () {
     results+=( ${A[*]} )
   done
   A=( $self ${results[*]} )
+}
+
+TNode.children () {
+  local -n children=TNode_children$1
+  local child results=()
+
+  for child in ${!children[*]}; do
+    TNode.object $child
+    results+=( "$S" )
+  done
+
+  printf -v S "%s,$NL" "${results[@]}"
+  S=${S%,$NL}
+}
+
+TNode.object () {
+  local self=$1
+  local format name
+
+  ! read -rd '' format <<'END'
+{
+  "name": "%s",
+  "children": [%s]
+}
+END
+
+  tNode.name $self
+  name=$S
+
+  TNode.children $self
+  printf -v S "$format" $name "${S:+$NL    }${S//$NL/$NL    }${S:+$NL  }"
 }

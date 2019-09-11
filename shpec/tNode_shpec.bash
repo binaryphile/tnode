@@ -319,3 +319,222 @@ describe tNode.walk
     assert equal "${expected[*]}" "${actual[*]}"
   ti
 end_describe
+
+describe TNode.children
+  it "renders a child"
+    tNode.new root
+    root=$S
+
+    tNode.new child
+    child=$S
+
+    tNode.setParent $child $root
+
+    ! read -rd '' expected <<'END'
+{
+  "name": "child",
+  "children": []
+}
+END
+
+    TNode.children $root
+    assert equal "$expected" "$S"
+  ti
+
+  it "renders two children"
+    tNode.new root
+    root=$S
+
+    tNode.new child1
+    child1=$S
+
+    tNode.new child2
+    child2=$S
+
+    tNode.setParent $child1 $root
+    tNode.setParent $child2 $root
+
+    ! read -rd '' expected <<'END'
+{
+  "name": "child1",
+  "children": []
+},
+{
+  "name": "child2",
+  "children": []
+}
+END
+
+    TNode.children $root
+    assert equal "$expected" "$S"
+  ti
+end_describe
+
+describe TNode.object
+  it "renders an empty childlist"
+    tNode.new root
+    root=$S
+
+    ! read -rd '' expected <<'END'
+{
+  "name": "root",
+  "children": []
+}
+END
+
+    TNode.object $root
+
+    assert equal "$expected" "$S"
+  ti
+
+  it "renders a child"
+    tNode.new root
+    root=$S
+
+    tNode.new child
+    child=$S
+
+    tNode.setParent $child $root
+
+    ! read -rd '' expected <<'END'
+{
+  "name": "root",
+  "children": [
+    {
+      "name": "child",
+      "children": []
+    }
+  ]
+}
+END
+
+    TNode.object $root
+    assert equal "$expected" "$S"
+  ti
+
+  it "renders two children"
+    tNode.new root
+    root=$S
+
+    tNode.new child1
+    child1=$S
+
+    tNode.new child2
+    child2=$S
+
+    tNode.setParent $child1 $root
+    tNode.setParent $child2 $root
+
+    ! read -rd '' expected <<'END'
+{
+  "name": "root",
+  "children": [
+    {
+      "name": "child1",
+      "children": []
+    },
+    {
+      "name": "child2",
+      "children": []
+    }
+  ]
+}
+END
+
+    TNode.object $root
+    assert equal "$expected" "$S"
+  ti
+
+  it "renders a grandchild"
+    tNode.new root
+    root=$S
+
+    tNode.new child
+    child=$S
+
+    tNode.new grandchild
+    grandchild=$S
+
+    tNode.setParent $child      $root
+    tNode.setParent $grandchild $child
+
+    ! read -rd '' expected <<'END'
+{
+  "name": "root",
+  "children": [
+    {
+      "name": "child",
+      "children": [
+        {
+          "name": "grandchild",
+          "children": []
+        }
+      ]
+    }
+  ]
+}
+END
+
+    TNode.object $root
+    assert equal "$expected" "$S"
+  ti
+
+  it "renders a tree"
+    tNode.new root
+    root=$S
+
+    tNode.new child1
+    child1=$S
+
+    tNode.new child2
+    child2=$S
+
+    tNode.new grandchild1
+    grandchild1=$S
+
+    tNode.new grandchild2
+    grandchild2=$S
+
+    tNode.new grandchild3
+    grandchild3=$S
+
+    tNode.setParent $child1       $root
+    tNode.setParent $child2       $root
+    tNode.setParent $grandchild1  $child1
+    tNode.setParent $grandchild2  $child2
+    tNode.setParent $grandchild3  $child2
+
+    ! read -rd '' expected <<'END'
+{
+  "name": "root",
+  "children": [
+    {
+      "name": "child1",
+      "children": [
+        {
+          "name": "grandchild1",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "child2",
+      "children": [
+        {
+          "name": "grandchild2",
+          "children": []
+        },
+        {
+          "name": "grandchild3",
+          "children": []
+        }
+      ]
+    }
+  ]
+}
+END
+
+    TNode.object $root
+    assert equal "$expected" "$S"
+  ti
+end_describe
