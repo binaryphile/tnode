@@ -5,48 +5,21 @@ shpec_parent=$(dirname $BASH_SOURCE)/..
 source $shpec_parent/shpec/shpec-helper.bash
 source $shpec_parent/lib/tNode.bash
 
-# describe tNode.json
-#   it "generates a one-level tree"
-#     n=$'\n'
-#
-#     tNode.new root
-#     tNode.json $R
-#
-#     assert equal "{$n  \"root\": [$n  ]$n}" "$R"
-#   ti
-#
-#   it "generates a two-level tree"
-#     n=$'\n'
-#
-#     tNode.new root
-#     root=$R
-#
-#     tNode.new child
-#     child=$R
-#
-#     tNode.setParent $child $root
-#
-#     tNode.json $root
-#
-#     assert equal "{$n  \"root\": \"child\"$n}" "$R"
-#   ti
-# end_describe
-
 describe tNode.leaf?
   it "returns true for a leaf"
     tNode.new
 
-    tNode.leaf? $R
+    tNode.leaf? $S
 
     assert equal 0 $?
   ti
 
   it "returns false for a non-leaf"
     tNode.new
-    root=$R
+    root=$S
 
     tNode.new
-    child=$R
+    child=$S
 
     tNode.setParent $child $root
     ! tNode.leaf? $root
@@ -58,308 +31,291 @@ end_describe
 describe tNode.new
   it "has a no-arg constructor which returns the first ref"
     tNode.new
-    assert equal 1 $R
+    assert equal 1 $S
   ti
 
   it "has a no-arg constructor which returns the second ref"
     tNode.new
     tNode.new
-    assert equal 2 $R
+    assert equal 2 $S
   ti
 
   it "has a no-arg constructor which sets no parent"
     tNode.new
-    assert equal 0 ${TNode_parents[$R]}
+    declare -n parent=TNode_parent$S
+    assert equal 0 $parent
   ti
 
   it "has a no-arg constructor which sets no children"
     tNode.new
-    assert equal '' "${TNode_children[$R]}"
+    declare -n ref=TNode_children$S
+    assert equal 0 ${#ref[*]}
   ti
 
   it "has a single-value constructor"
     tNode.new sample
-    assert equal sample ${TNode_names[$R]}
+    local -n name=TNode_name$S
+    assert equal sample $name
   ti
 end_describe
 
 describe tNode.parent
   it "gets the parent of a root"
     tNode.new
-    root=$R
+    root=$S
 
     tNode.new
-    parent=$R
+    parent=$S
 
     tNode.setParent $root $parent
     tNode.parent $root
 
-    assert equal $parent $R
+    assert equal $parent $S
   ti
 end_describe
 
 describe tNode.remove
   it "removes a root's list of children"
     tNode.new
-    root=$R
+    root=$S
 
     tNode.remove $root
 
-    assert equal '' "${!TNode_children[*]}"
+    ! declare -p TNode_children$root &>/dev/null
+
+    assert equal 0 $?
   ti
 
   it "removes a root's parent reference"
     tNode.new
-    root=$R
+    root=$S
 
     tNode.remove $root
 
-    assert equal '' "${!TNode_parents[*]}"
+    ! declare -p TNode_parent$root &>/dev/null
+    assert equal 0 $?
   ti
 
-  it "removes a root's value"
+  it "removes a root's name"
     tNode.new
-    root=$R
+    root=$S
 
     tNode.remove $root
 
-    assert equal '' "${!TNode_names[*]}"
+    ! declare -p TNode_name$root &>/dev/null
+    assert equal 0 $?
   ti
 
   it "removes the parent's child reference"
     tNode.new
-    root=$R
+    root=$S
 
     tNode.new
-    child=$R
+    child=$S
 
     tNode.setParent $child $root
     tNode.remove $child
 
-    assert equal '' "${TNode_children[$root]}"
+    declare -n ref=TNode_children$root
+    assert equal 0 ${#ref[*]}
   ti
 
   it "removes a child's list of children"
     tNode.new
-    root=$R
+    root=$S
 
     tNode.new
-    child=$R
+    child=$S
 
     tNode.setParent $child $root
     tNode.remove $root
 
-    assert equal '' "${!TNode_children[*]}"
+    ! declare -p TNode_children$child &>/dev/null
+    assert equal 0 $?
   ti
 
   it "removes a child's parent reference"
     tNode.new
-    root=$R
+    root=$S
 
     tNode.new
-    child=$R
+    child=$S
 
     tNode.setParent $child $root
     tNode.remove $root
 
-    assert equal '' "${!TNode_parents[*]}"
+    ! declare -p TNode_parent$child &>/dev/null
+    assert equal 0 $?
   ti
 
-  it "removes a child's values"
+  it "removes a child's name"
     tNode.new
-    root=$R
+    root=$S
 
     tNode.new
-    child=$R
+    child=$S
 
     tNode.setParent $child $root
     tNode.remove $root
 
-    assert equal '' "${!TNode_names[*]}"
+    ! declare -p TNode_name$child &>/dev/null
+    assert equal 0 $?
   ti
 
   it "removes a grandchild's list of children"
     tNode.new
-    root=$R
+    root=$S
 
     tNode.new
-    child=$R
+    child=$S
 
     tNode.new
-    grandchild=$R
+    grandchild=$S
 
     tNode.setParent $child       $root
     tNode.setParent $grandchild  $child
     tNode.remove $root
 
-    assert equal '' "${!TNode_children[*]}"
+    ! declare -p TNode_children$grandchild &>/dev/null
+    assert equal 0 $?
   ti
 
   it "removes a grandchild's parent reference"
     tNode.new
-    root=$R
+    root=$S
 
     tNode.new
-    child=$R
+    child=$S
 
     tNode.new
-    grandchild=$R
+    grandchild=$S
 
     tNode.setParent $child $root
     tNode.setParent $grandchild $child
     tNode.remove $root
 
-    assert equal '' "${!TNode_parents[*]}"
+    ! declare -p TNode_parent$grandchild &>/dev/null
+    assert equal 0 $?
   ti
 
-  it "removes a grandchild's values"
+  it "removes a grandchild's name"
     tNode.new
-    root=$R
+    root=$S
 
     tNode.new
-    child=$R
+    child=$S
 
     tNode.new
-    grandchild=$R
+    grandchild=$S
 
     tNode.setParent $child       $root
     tNode.setParent $grandchild  $child
     tNode.remove $root
 
-    assert equal '' "${!TNode_names[*]}"
-  ti
-end_describe
-
-describe tNode.setParent
-  it "sets the parent of a root"
-    tNode.new
-    root=$R
-
-    tNode.new
-    parent=$R
-
-    tNode.setParent $root $parent
-    assert equal $parent ${TNode_parents[$root]}
-  ti
-
-  it "sets the child of the parent root"
-    tNode.new
-    root=$R
-
-    tNode.new
-    parent=$R
-
-    tNode.setParent $root $parent
-
-    assert equal "[$root]=\"\" " ${TNode_children[$parent]}
-  ti
-
-  it "errors on 0 parent"
-    tNode.new
-    ! tNode.setParent $R 0
+    ! declare -p TNode_name$grandchild &>/dev/null
     assert equal 0 $?
   ti
 end_describe
 
-describe tNode.setValue
-  it "sets the value of a root"
+describe tNode.setParent
+  it "sets the parent of a child"
     tNode.new
-    root=$R
+    root=$S
 
-    tNode.setValue $root sample
+    tNode.new
+    child=$S
 
-    assert equal sample ${TNode_names[$root]}
+    tNode.setParent $child $root
+
+    local -n parent=TNode_parent$child
+    assert equal $root $parent
+  ti
+
+  it "sets the child of the root"
+    tNode.new
+    root=$S
+
+    tNode.new
+    child=$S
+
+    tNode.setParent $child $root
+
+    declare -n ref=TNode_children$root
+
+    assert equal 1 ${#ref[*]}
+  ti
+
+  it "errors on 0 parent"
+    tNode.new
+    ! tNode.setParent $S 0
+    assert equal 0 $?
   ti
 end_describe
 
-describe tNode.value
-  it "gets the value of a root"
+describe tNode.setName
+  it "sets the value of a root"
     tNode.new
-    root=$R
+    root=$S
 
-    tNode.setValue $root sample
-    tNode.value $root
+    tNode.setName $root sample
 
-    assert equal sample $R
+    local -n name=TNode_name$root
+    assert equal sample $name
+  ti
+end_describe
+
+describe tNode.name
+  it "gets the name of a node"
+    tNode.new sample
+    root=$S
+
+    tNode.name $root
+
+    assert equal sample $S
   ti
 end_describe
 
 describe tNode.walk
   it "names the roots of a single-level tree"
     tNode.new
-    root=$R
+    root=$S
 
     tNode.walk $root
 
-    assert equal "[0]=\"$root\"" $R
+    assert equal 1 "${A[*]}"
   ti
 
   it "names the roots of a two-level tree"
     tNode.new
-    root=$R
+    root=$S
 
     tNode.new
-    child=$R
+    child=$S
 
     tNode.setParent $child $root
     tNode.walk $root
+    actual=( ${A[*]} )
 
-    assert equal "[0]=\"$root\" [1]=\"$child\"" $R
+    expected=( $root $child )
+    assert equal "${expected[*]}" "${actual[*]}"
   ti
 
   it "names the roots of a three-level tree"
     tNode.new
-    root=$R
+    root=$S
 
     tNode.new
-    child=$R
+    child=$S
 
     tNode.new
-    grandchild=$R
+    grandchild=$S
 
     tNode.setParent $child       $root
     tNode.setParent $grandchild  $child
     tNode.walk $root
+    actual=( ${A[*]} )
 
-    assert equal "[0]=\"$root\" [1]=\"$child\" [2]=\"$grandchild\"" $R
-  ti
-end_describe
-
-describe TNode.add
-  it "adds an element to a serialized set"
-    samples=()
-
-    TNode.add samples[0] sample
-
-    assert equal '[sample]="" ' ${samples[0]}
-  ti
-end_describe
-
-describe TNode.remove
-  it "removes an element from a serialized set"
-    samples=()
-
-    TNode.add    samples[0] sample
-    TNode.remove samples[0] sample
-
-    assert equal '' "${samples[0]}"
-  ti
-end_describe
-
-describe TNode.repr
-  it "serializes array values"
-    samples=( zero )
-
-    TNode.repr samples
-
-    assert equal '[0]="zero"' $R
-  ti
-
-  it "serializes hash values"
-    declare -A samples=( [zero]=0 )
-
-    TNode.repr samples
-
-    assert equal '[zero]="0" ' $R
+    expected=( $root $child $grandchild )
+    assert equal "${expected[*]}" "${actual[*]}"
   ti
 end_describe
